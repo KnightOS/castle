@@ -1,31 +1,15 @@
-OUTDIR:=bin/
-BINDIR:=$(OUTDIR)bin/
-ETCDIR:=$(OUTDIR)etc/
+include .knightos/variables.make
 
-DEPENDENCIES=../corelib/
+# This is a list of files that need to be added to the filesystem when installing your program
+ALL_TARGETS:=$(BIN)castle $(ETC)castle.conf
 
-all: package
+# This is all the make targets to produce said files
+$(BIN)castle: main.asm
+	mkdir -p $(BIN)
+	$(AS) $(ASFLAGS) --listing $(OUT)main.list main.asm $(BIN)castle
 
-package: $(BINDIR)castle $(ETCDIR)castle.conf $(ETCDIR)launcher
-	kpack castle-0.1.0.pkg $(OUTDIR)
+$(ETC)castle.conf: castle.conf.asm
+	mkdir -p $(ETC)
+	$(AS) $(ASFLAGS) castle.conf.asm $(ETC)castle.conf
 
-$(BINDIR)castle: castle.asm graphics.asm
-	mkdir -p $(BINDIR)
-	$(AS) $(ASFLAGS) --define "$(PLATFORM)" --include "$(INCLUDE);$(PACKAGEPATH)/castle/;$(DEPENDENCIES)" castle.asm $(BINDIR)castle
-
-$(ETCDIR)castle.conf: castle.config.asm
-	mkdir -p $(ETCDIR)
-	$(AS) $(ASFLAGS) --define "$(PLATFORM)" --include "$(INCLUDE);$(PACKAGEPATH)/castle/" castle.config.asm $(ETCDIR)castle.conf
-
-$(ETCDIR)launcher:
-	mkdir -p $(ETCDIR)
-	echo -n "/bin/castle" > $(ETCDIR)launcher
-
-clean:
-	rm -rf $(OUTDIR)
-	rm -rf castle-0.1.0.pkg
-
-install: package
-	kpack -e -s castle-0.1.0.pkg $(PREFIX)
-
-.PHONY: all clean
+include .knightos/sdk.make
