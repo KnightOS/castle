@@ -16,6 +16,8 @@ name:
     .db "Castle", 0
 description:
     .db "KnightOS program launcher", 0
+timer:
+    .db 0
 start:
     pcall(getLcdLock)
     pcall(getKeypadLock)
@@ -27,6 +29,8 @@ start:
 resetToHome:
     ei
     ld d, 0
+    xor a
+    kld((timer), a)
 redrawHome:
     push de
         kcall(drawChrome)
@@ -34,10 +38,11 @@ redrawHome:
     pop de
 homeLoop:
     kcall(drawHomeIcons)
-    pcall(fastCopy)
+    pcall(flushKeys)
 
-_:  pcall(flushKeys)
-    pcall(waitKey)
+_:  kcall(drawClock)
+    pcall(fastCopy)
+    pcall(getKey)
 
     cp kRight
     jr z, homeRightKey

@@ -50,17 +50,65 @@ _:  ld l, 60
     pcall(setPixel)
     inc a
     djnz -_
-_:
-#ifdef CLOCK
+_:  ; Fallthrough to drawClock
+
+; TODO: 24 hour time in /etc/locale.conf
+drawClock:
     ; Get time
     push ix
+    push de
+    push bc
+    push hl
+        ; Clear away old time
+        ld bc, (6 << 8) + (96 - 69)
+        ld e, 69
+        ld l, 4
+        pcall(rectAND)
+        ; Get and draw new time
         pcall(getTime)
-        ; TODO
-        kld(hl, dummyTimeString)
+        jr nz, .skipTime
         ld de, (69 << 8) | 4
-        pcall(drawStr)
+        ld a, b
+        cp 12
+        jr c, _
+        sub a, 12
+_:      or a
+        jr nz, _
+        ld a, 12
+_:      kcall(drawDecAPadded)
+        ld a, ':'
+        pcall(drawChar)
+        ld a, c
+        kcall(drawDecAPadded)
+        ld a, ' '
+        pcall(drawChar)
+        ld a, b
+        cp 12
+        jr nc, _
+        ld a, 'A'
+        jr ++_
+_:      ld a, 'P'
+_:      pcall(drawChar)
+        ld a, 'M'
+        pcall(drawChar)
+.skipTime:
+    pop hl
+    pop bc
+    pop de
     pop ix
-#endif
+    ret
+
+; From core/settings
+drawDecAPadded:
+    cp 10
+    jr nc, .noPadding
+    ; do padding
+    push af
+        ld a, '0'
+        pcall(drawChar)
+    pop af
+.noPadding:
+    pcall(drawDecA)
     ret
 
 drawHome:
@@ -459,7 +507,3 @@ configPath:
     .db "/etc/castle.conf", 0
 naString:
     .db "[n/a]", 0
-#ifdef CLOCK
-dummyTimeString:
-    .db "12:00 AM", 0
-#endif
