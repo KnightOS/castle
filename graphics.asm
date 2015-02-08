@@ -32,7 +32,7 @@ _:  ld a, 8
 drawBattery:
     pcall(getBatteryLevel)
     ld a, b
-    cp 0
+    or a
     jr z, batteryCritical
     rlca \ rlca \ and 3 \ inc a ; (getBatteryLevel+1/64)+1
     ld b, a
