@@ -29,17 +29,13 @@ _:  ld a, 8
     ld de, 0x5F0A
     pcall(drawLine)
 
-    kld(hl, batteryIndicatorSprite)
-    ld b, 4
-    ld de, 0x193B
-    pcall(putSpriteOR)
-
+drawBattery:
     pcall(getBatteryLevel)
-    ld d, b
-    ld e, 85
-    pcall(div8By8)
-    ld b, d
-    inc b
+    ld a, b
+    cp 0
+    jr z, batteryCritical
+    rlca \ rlca \ and 3 \ inc a ; (getBatteryLevel+1/64)+1
+    ld b, a
     xor a
     cp b
     jr z, ++_
@@ -50,6 +46,20 @@ _:  ld l, 60
     pcall(setPixel)
     inc a
     djnz -_
+
+batteryNormal:
+    kld(hl, batteryIndicatorSprite)
+    ld b, 4
+    ld de, 0x193B
+    pcall(putSpriteOR)
+    jr _
+
+batteryCritical:
+    kld(hl, batteryCriticalIndicatorSprite)
+    ld b, 4
+    ld de, 0x193B
+    pcall(putSpriteOR)
+
 _:  ; Fallthrough to drawClock
 
 ; TODO: 24 hour time in /etc/locale.conf
@@ -435,6 +445,12 @@ batteryIndicatorSprite: ; 8x4
     .db 0b10000110
     .db 0b10000110
     .db 0b11111100
+
+batteryCriticalIndicatorSprite: ; 8x4
+    .db 0b10101100
+    .db 0b10100110
+    .db 0b10000110
+    .db 0b10101100
 
 selectionIndicatorSprite: ; 8x5
     .db 0b10000000
