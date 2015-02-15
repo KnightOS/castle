@@ -128,7 +128,7 @@ drawManifestList:
 .exitEarly:
     ld a, 1
     cp b
-    ret z
+    jr z, .ret
     ld de, 0x5934
     kld(hl, menuArrowSpriteFlip)
     ld b, 3
