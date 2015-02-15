@@ -1,5 +1,6 @@
 #include "kernel.inc"
 #include "corelib.inc"
+#include "config.inc"
     .db "KEXC"
     .db KEXC_ENTRY_POINT
     .dw start
@@ -25,6 +26,9 @@ start:
     pcall(allocScreenBuffer)
 
     kld(de, corelibPath)
+    pcall(loadLibrary)
+
+    kld(de, configlibPath)
     pcall(loadLibrary)
 resetToHome:
     ei
@@ -53,7 +57,7 @@ _:  kcall(drawClock)
     cp kDown
     jr z, homeDownKey
     cp kYEqu
-    kjp(z, displayApps)
+    kjp(z, applicationList)
     cp kZoom
     kjp(z, powerMenu)
     cp kEnter
@@ -203,121 +207,6 @@ castleReturnHandler_path:
     .db "/bin/castle", 0
 castleReturnHandler_end:
 
-displayApps:
-    ; calculate the total number of apps
-    xor a
-    kld((dispApps_filesNb), a)
-    kld(de, appsLocation)
-    kld(hl, dispApps_calcSize)
-    pcall(listDirectory)
-    ; display a scrolling list of all apps
-    xor a
-    kld((dispApps_userCursor), a)
-    kld((dispApps_offset), a)
-dispApps_redraw:
-    pcall(clearBuffer)
-    kcall(drawAppsChrome)
-    kcall(drawAppsHome)
-    ld de, (1 << 8) + 4
-    kld(hl, dispApps_name)
-    pcall(drawStr)
-    ld hl, (5 << 8) + 12
-    kld((dispApps_textCursor), hl)
-    xor a
-    kld((dispApps_computed), a)
-    kld(de, appsLocation)
-    kld(hl, dispApps_callback)
-    pcall(listDirectory)
-    pcall(fastCopy)
-    ; TODO : let the user select an app and launch it
-dispApps_loop:
-    pcall(flushKeys)
-    pcall(waitKey)
-    cp kMode
-    kjp(z, resetToHome)
-    cp kYEqu
-    kjp(z, resetToHome)
-    cp kEnter
-    kjp(z, dispApps_launchApp)
-    cp kUp
-    jr z, dispApps_doUp
-    cp kDown
-    jr z, dispApps_doDown
-    jr dispApps_loop
-    
-dispApps_calcSize:
-    cp fsFile
-    ret nz
-    push hl
-        kld(hl, dispApps_filesNb)
-        inc (hl)
-    pop hl
-    ret
-    
-dispApps_callback:
-    cp fsFile
-    ret nz
-    push af \ push bc \ push de \ push hl
-        kld(a, (dispApps_offset))
-        or a
-        jr z, .doDisplay
-        kld(hl, dispApps_computed)
-        dec a
-        cp (hl)
-        jr nc, .doneDisplaying
-        ; skip entries because scrolling
-.doDisplay:
-        kld(de, (dispApps_textCursor))
-        ld a, 58
-        cp e
-        jr c, .doneDisplaying
-        ; draw carret if needed
-        kld(a, (dispApps_userCursor))
-        kld(hl, dispApps_computed)
-        cp (hl)
-        jr nz, .noCarret
-        kld(hl, dispApps_cursorSprite)
-        ld b, d
-        ld d, 0
-        pcall(putSpriteOR)
-        ld d, b
-.noCarret:
-        ld hl, kernelGarbage
-        push hl
-            ld b, '.'
-            pcall(strchr)
-            ld (hl), 0
-        pop hl
-        ld b, d
-        pcall(drawStr)
-        pcall(newline)
-        kld((dispApps_textCursor), de)
-.doneDisplaying:
-        kld(hl, dispApps_computed)
-        inc (hl)
-    pop hl \ pop de \ pop bc \ pop af
-    ret
-
-dispApps_doDown:
-    kld(hl, dispApps_userCursor)
-    kld(a, (dispApps_filesNb))
-    dec a
-    cp (hl)
-    jr z, $ + 3
-    inc (hl)
-    kjp(dispApps_redraw)
-    
-dispApps_doUp:
-    kld(hl, dispApps_userCursor)
-    xor a
-    or (hl)
-    jr z, $ + 3
-    dec (hl)
-    kjp(dispApps_redraw)
-
-dispApps_launchApp:
-    kjp(dispApps_redraw)
-
 powerMenu:
     push de
         kcall(drawPowerMenu)
@@ -400,11 +289,14 @@ _:  ld a, 2 \ out (0x10), a
     jp (hl)
 
 #include "graphics.asm"
+#include "applist.asm"
 
 threadlist:
     .db "/bin/threadlist", 0
 corelibPath:
     .db "/lib/core", 0
+configlibPath:
+    .db "/lib/config", 0
 confirmMessage:
     .db "Are you sure?\nUnsaved data\nmay be lost.", 0
 shutdownOptions:

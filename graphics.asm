@@ -374,6 +374,10 @@ drawAppsHome:
     ld de, 0x093A
     kld(hl, backString)
     pcall(drawStr)
+
+    ld de, 0x0104
+    kld(hl, applistString)
+    pcall(drawStr)
     
     ret
 
@@ -523,3 +527,5 @@ configPath:
     .db "/etc/castle.conf", 0
 naString:
     .db "[n/a]", 0
+applistString:
+    .db "Installed Applications", 0
