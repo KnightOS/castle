@@ -30,6 +30,8 @@ start:
 
     kld(de, configlibPath)
     pcall(loadLibrary)
+
+    kcall(loadPinnedConfig)
 resetToHome:
     ei
     ld d, 0
@@ -98,7 +100,12 @@ homeDownKey:
 
 homeSelect:
     ld a, d
-    ; TODO: All of this shit
+    add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
+    kld(ix, pinned_apps)
+    ld b, 0 \ ld c, a
+    add ix, bc
+    ld e, (ix + 0)
+    ld d, (ix + 1)
     kjp(launch)
     kjp(homeLoop)
 
@@ -250,6 +257,7 @@ _:  ld a, 2 \ out (0x10), a
 
 #include "graphics.asm"
 #include "applist.asm"
+#include "pinned.asm"
 
 threadlist:
     .db "/bin/threadlist", 0

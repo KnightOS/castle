@@ -168,10 +168,6 @@ drawPinnedApps:
         ld bc, 0x0A00
 
         kld(ix, pinned_apps)
-        jr .loop
-.loop_insert:
-        djnz .loop
-        kjp(.exit)
 .loop:
         ; Check to see if this item is selected
         pop af \ push af
@@ -179,54 +175,12 @@ drawPinnedApps:
 
         push bc
             push de
-                kld(de, pin_path)
-                kld(hl, number@pin_path)
-                ld a, c
-                dec a
-                add a, '0'
-                ld (hl), a
-                config(openConfigRead)
-                kjp(nz, .emptyPin)
-
-                kld(hl, config_name_variable)
-                config(readOption)
-                jr nz, _
-                ld (ix + 2), l
-                ld (ix + 3), h
-
-_:              kld(hl, config_exec_variable)
-                config(readOption)
-                jr nz, _
-                ld (ix + 0), l
-                ld (ix + 1), h
-
-_:              kld(hl, config_icon_variable)
-                config(readOption)
-
-                push af
-                    config(closeConfig)
-                pop af
-                jr nz, .emptyPin
                 ; Load icon
-                ld b, h \ ld c, l
-                ex de, hl
-                pcall(openFileRead)
-                push ix
-                    push af
-                        push bc \ pop ix \ pcall(free) ; Free icon path
-                    pop af
-                    jr nz, .emptyPin
-                    pcall(getStreamInfo)
-                    pcall(malloc)
-                    pcall(streamReadToEnd)
-                    pcall(closeStream)
-                    push ix \ pop hl
-                pop ix
-                ld (ix + 4), l
-                ld (ix + 5), h
-                ; TODO: Use kernel image handlers
-                ; TODO: Check for monochrome images
-                ; TODO: Check that image is 16x16
+                ld l, (ix + 4)
+                ld h, (ix + 5)
+                ld bc, 0
+                pcall(cpHLBC)
+                jr z, .emptyPin
                 ld bc, 7
                 add hl, bc
                 ld bc, 6
@@ -242,27 +196,26 @@ _:              kld(hl, config_icon_variable)
             ; Wrap
             ld de, 0x0225
 _:      pop bc
-        kjp(.loop_insert)
+        djnz .loop
+    pop af
+    pop de
+    ret
 .emptyPin:
             kld(hl, emptySlotIcon)
             ld bc, 6
             add ix, bc
         pop de
         jr .drawIcon
-.exit:
-    pop af
-    pop de
-    ret
 
 drawSelectionRectangle:
     push de \ push hl \ push bc \ push af
         ; Find name string
-        ld c, (ix)
-        ld b, (ix + 1)
-        ld a, 0xFF
-        cp b
+        ld l, (ix + 2)
+        ld h, (ix + 3)
+        xor a
+        cp l
         jr nz, _
-        cp c
+        cp h
         jr nz, _
         kcall(drawEmptySlotName)
         jr ++_
@@ -283,11 +236,6 @@ _:      ld a, e ; Get x
     ret
 
 drawSelectedName:
-    push ix
-        pcall(memSeekToStart)
-        add ix, bc
-        push ix \ pop hl
-    pop ix
     ; Draw name string
     push de
         ld de, 0x0104
@@ -545,29 +493,3 @@ naString:
     .db "[n/a]", 0
 applistString:
     .db "Installed Applications", 0
-pin_path:
-    .db "/var/castle/pin-"
-.number:
-    .db " ", 0
-config_icon_variable:
-    .db "icon", 0
-config_exec_variable:
-    .db "exec", 0
-config_name_variable:
-    .db "name", 0
-pinned_apps:
-    ; struct {
-    ;   char *exec;
-    ;   char *name;
-    ;   char *icon_mem;
-    ; }[10]
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
-    .dw 0, 0, 0
