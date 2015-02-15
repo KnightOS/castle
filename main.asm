@@ -41,7 +41,7 @@ redrawHome:
         kcall(drawHome)
     pop de
 homeLoop:
-    kcall(drawHomeIcons)
+    kcall(drawPinnedApps)
     pcall(flushKeys)
 
 _:  kcall(drawClock)
@@ -98,48 +98,8 @@ homeDownKey:
 
 homeSelect:
     ld a, d
-    push af
-        ; Load config
-        kld(de, configPath)
-        pcall(openFileRead)
-        push de
-            pcall(getStreamInfo)
-        pop de
-        pcall(malloc)
-        pcall(streamReadToEnd)
-        pcall(closeStream)
-
-        ; IX is the config file
-        ld bc, 0x0AFF
-_:      inc c
-        ld l, (ix)
-        ld h, (ix + 1)
-        inc ix \ inc ix
-        ld a, 0xFF
-        cp h \ jr nz, _ \ cp l \ jr nz, _
-        ; Empty slot
-        djnz -_
-_:  pop af \ push af
-        cp c
-        jr nz, _
-        ; This is the correct slot
-        ld e, (ix)
-        ld d, (ix + 1)
-        pcall(memSeekToStart)
-        push ix \ pop hl
-        add hl, de \ ex de, hl
-    pop af
-    pcall(memSeekToStart)
-    pcall(free)
+    ; TODO: All of this shit
     kjp(launch)
-_:      push bc
-            ld bc, 34
-            add ix, bc
-        pop bc
-        djnz ---_
-    pop af
-    pcall(memSeekToStart)
-    pcall(free)
     kjp(homeLoop)
 
 incrementContrast:
