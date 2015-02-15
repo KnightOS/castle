@@ -1,4 +1,3 @@
-
 applicationList:
     xor a
     kld((manifestScroll), a)
@@ -284,7 +283,7 @@ manifestList:
     .dw 0
 manifestCount:
     .db 0 ; Note: will you ever have more than 256 apps installed?
-    
+
 manifestPath:
     .db "/var/applications/", 0
 manifestPath_end:

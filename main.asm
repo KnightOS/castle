@@ -215,7 +215,7 @@ powerMenuLoop:
         pcall(fastCopy)
         pcall(flushKeys)
         pcall(waitKey)
-        
+
         cp kUp
         jr z, powerMenuUp
         cp kDown
@@ -228,7 +228,7 @@ powerMenuLoop:
         kjp(z, pop_resetToHome)
         cp kZoom
         kjp(z, pop_resetToHome)
-        
+
         jr powerMenuLoop
 
 powerMenuUp:
