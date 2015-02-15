@@ -336,7 +336,7 @@ drawAppsHome:
     ld b, 5
     ld de, 0x003A
     pcall(putSpriteOR)
-    
+
     ld de, 0x093A
     kld(hl, backString)
     pcall(drawStr)
@@ -344,7 +344,7 @@ drawAppsHome:
     ld de, 0x0104
     kld(hl, applistString)
     pcall(drawStr)
-    
+
     ret
 
 castleTopSprite: ; 8x3
