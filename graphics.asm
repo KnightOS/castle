@@ -181,7 +181,7 @@ drawPinnedApps:
                 ld bc, 0
                 pcall(cpHLBC)
                 jr z, .emptyPin
-                ld bc, 7
+                ld bc, 10
                 add hl, bc
                 ld bc, 6
                 add ix, bc
