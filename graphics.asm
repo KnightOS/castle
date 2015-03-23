@@ -254,12 +254,12 @@ drawEmptySlotName:
 drawPowerMenu:
     ld e, 27
     ld l, 36
-    ld c, 67-26
+    ld c, 67-24
     ld b, 56-35
     pcall(rectOR)
     ld e, 28
     ld l, 37
-    ld c, 66-27
+    ld c, 66-25
     ld b, 55-36
     pcall(rectXOR)
     ld de, 0x2339
