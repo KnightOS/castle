@@ -70,14 +70,14 @@ drawClock:
     push bc
     push hl
         ; Clear away old time
-        ld bc, (6 << 8) + (96 - 69)
+        ld bc, (6 << 8) + (96 - 64)
         ld e, 69
         ld l, 4
         pcall(rectAND)
         ; Get and draw new time
         pcall(getTime)
         jr nz, .skipTime
-        ld de, (69 << 8) | 4
+        ld de, (64 << 8) | 4
         ld a, b
         cp 12
         jr c, _
@@ -144,7 +144,7 @@ drawHome:
     kld(hl, menuString)
     pcall(drawStr)
 
-    ld de, 0x3E3A
+    ld de, 0x3C3A
     kld(hl, runningString)
     pcall(drawStr)
     ret
