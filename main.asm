@@ -60,8 +60,6 @@ _:  kcall(drawClock)
     jr z, homeDownKey
     cp kYEqu
     kjp(z, applicationList)
-    cp kApps
-    kjp(z, applicationList)
     cp kZoom
     kjp(z, powerMenu)
     cp kEnter
@@ -243,6 +241,9 @@ confirmShutDown:
 confirmRestart:
     ld hl, 0x18 ; reboot
 confirmSelection:
+    ld a, (activeThreads) ; This sucks and there should be a kernel API
+    cp 1
+    jr z, _
     push hl
         kld(hl, confirmMessage)
         kld(de, shutdownOptions)
