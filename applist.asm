@@ -5,6 +5,10 @@ applicationList:
     kcall(drawAppsChrome)
     kcall(drawAppsHome)
     kcall(getManifestList)
+    ; Check for empty
+    kld(a, (manifestCount))
+    or a
+    kjp(z, displayEmptyMessage)
     kcall(drawManifestList)
 
     ld c, 0
@@ -15,9 +19,9 @@ applicationList:
     pcall(flushKeys)
     pcall(waitKey)
     cp kClear
-    jr z, .returnToHome
+    kjp(z, returnToHome)
     cp kF1
-    jr z, .returnToHome
+    kjp(z, returnToHome)
     cp kDown
     jr z, .handleDown
     cp kUp
@@ -27,9 +31,6 @@ applicationList:
     cp k2nd
     kjp(z, .launchSelected)
     jr .loop
-.returnToHome:
-    kcall(freeExistingManifest)
-    kjp(resetToHome)
 .handleDown:
     kld(a, (manifestCount))
     dec a
@@ -141,6 +142,33 @@ drawManifestList:
     ld b, 3
     pcall(putSpriteOR)
     ret
+
+displayEmptyMessage:
+    kld(hl, emptyMessage)
+    ; Center text
+    push hl
+        pcall(measureStr)
+        neg
+        add a, 96
+        sra a
+        ld d, a
+        ld e, (64 - 5) / 2
+    pop hl
+    pcall(drawStr)
+.loop:
+    pcall(fastCopy)
+
+    pcall(flushKeys)
+    pcall(waitKey)
+    cp kClear
+    jr z, returnToHome
+    cp kF1
+    jr z, returnToHome
+    jr .loop
+
+returnToHome:
+    kcall(freeExistingManifest)
+    kjp(resetToHome)
 
 manifestScroll:
     .db 0
@@ -287,3 +315,6 @@ manifestCount:
 manifestPath:
     .db "/var/applications/", 0
 manifestPath_end:
+
+emptyMessage:
+    .db "No applications!", 0
