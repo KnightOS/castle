@@ -60,6 +60,8 @@ _:  kcall(drawClock)
     jr z, homeDownKey
     cp kYEqu
     kjp(z, applicationList)
+    cp kApps
+    kjp(z, applicationList)
     cp kZoom
     kjp(z, powerMenu)
     cp kEnter
