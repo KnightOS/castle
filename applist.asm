@@ -90,7 +90,7 @@ applicationList:
 .launchSelected:
     kld(hl, (manifestList))
     ld a, c
-    add a, a \ add a, a
+    add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
     ld b, 0 \ ld c, a
     add hl, bc
     inc hl \ inc hl
@@ -107,17 +107,19 @@ drawManifestList:
     kld(a, (manifestScroll))
     neg \ add a, b \ ld b, a
     kld(a, (manifestScroll))
-    add a, a \ add a, a
+    push bc
+        add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
+    pop bc
     add a, l \ ld l, a \ jr nc, $+3 \ inc h
     push hl \ pop ix
 .loop:
     push bc
-        ld b, 0x06
         ld l, (ix)
         ld h, (ix + 1)
         pcall(drawStr)
+        ld b, 6
         pcall(newline)
-        ld bc, 4
+        ld bc, 6
         add ix, bc
     pop bc
     ld a, 0x0C + (7 * 6) ; Bottom of screen
@@ -191,7 +193,7 @@ getManifestList:
     pcall(cpHLBC)
     kcall(nz, freeExistingManifest)
 
-    ld bc, 0x100 ; Default length of manifest list
+    ld bc, 0x200 ; Default length of manifest list
     pcall(malloc)
     jr nz, $ ; TODO: Handle OOM
     kld((manifestList), ix)
@@ -216,11 +218,11 @@ getManifestList:
     kld(de, (manifestList))
     kld(a, (manifestCount))
     dec a
-    add a, a \ add a, a
+    add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
     ld b, 0 \ ld c, a
     add hl, bc
     ex de, hl
-    ld bc, 4
+    ld bc, 6
     pcall(callbackSort)
     ret
 .callback:
@@ -241,29 +243,39 @@ _:  push de
         inc bc
         ldir
         push ix \ pop de
+        ld hl, 0
+        kld((.icon_scratch), hl) ; Default icon is 0
         config(openConfigRead)
-        kld(hl, .manifest_name)
+        kld(hl, config_name_variable)
         config(readOption)
         jr nz, .error
         kld((.name_scratch), hl)
-        kld(hl, .manifest_exec)
+        kld(hl, config_exec_variable)
         config(readOption)
         jr nz, .error
         kld((.exec_scratch), hl)
-        config(closeConfig)
+        kld(hl, config_icon_variable)
+        config(readOption)
+        jr nz, _
+        kld((.icon_scratch), hl)
+_:      config(closeConfig)
         ; Names list in memory is:
         ; struct {
         ;   char *name;
         ;   char *exec;
+        ;   void *icon;
         ; }
         kld(a, (manifestCount))
         kld(hl, (manifestList))
-        add a, a \ add a, a
+        add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
         add a, l \ ld l, a \ jr nc, $+3 \ inc h
         kld(de, (.name_scratch))
         ld (hl), e \ inc hl
         ld (hl), d \ inc hl
         kld(de, (.exec_scratch))
+        ld (hl), e \ inc hl
+        ld (hl), d \ inc hl
+        kld(de, (.icon_scratch))
         ld (hl), e \ inc hl
         ld (hl), d
         kld(hl, manifestCount)
@@ -273,13 +285,11 @@ _:  push de
     pop hl
     pop de
     ret
-.manifest_name:
-    .db "name", 0
-.manifest_exec:
-    .db "exec", 0
 .name_scratch:
     .dw 0
 .exec_scratch:
+    .dw 0
+.icon_scratch:
     .dw 0
 
 freeExistingManifest:
