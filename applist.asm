@@ -355,6 +355,7 @@ _:      config(closeConfig)
 freeExistingManifest:
     kld(hl, (manifestList))
     kld(a, (manifestCount))
+    add a, a \ ld b, a \ add a, a \ add a, b
     ld b, a
 _:  ld e, (hl)
     inc hl
