@@ -492,4 +492,4 @@ noProgramsInstalledString:
 naString:
     .db "[n/a]", 0
 applistString:
-    .db "Installed Applications", 0
+    .db "All Applications", 0

@@ -14,6 +14,7 @@ applicationList:
     ld c, 0
     kcall(xorManifestCaret)
 .loop:
+    kcall(.drawIcon)
     pcall(fastCopy)
 
     pcall(flushKeys)
@@ -97,6 +98,44 @@ applicationList:
     ld e, (hl) \ inc hl
     ld d, (hl)
     kjp(launch)
+.drawIcon:
+    push hl
+    push de
+    push bc
+        ; Clear away old icon
+        ld e, 77 ; x
+        ld l, 10 ; y
+        ld bc, 0x1414 ; height, width
+        pcall(rectOR)
+        ld e, 78 ; x
+        ld l, 11 ; y
+        ld bc, 0x1212 ; height, width
+        pcall(rectAND)
+        ; Draw icon
+        kld(hl, (manifestList))
+    pop bc \ push bc
+        ld a, c
+        add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
+        ld b, 0 \ ld c, a
+        add hl, bc
+        inc hl \ inc hl \ inc hl \ inc hl
+        ld e, (hl) \ inc hl
+        ld d, (hl) \ inc hl
+        ld bc, 0
+        pcall(cpBCDE)
+        jr nz, _
+        kld(de, emptySlotIcon - 10)
+_:      ex de, hl
+        ld bc, 10
+        add hl, bc ; Skip KIMG header
+        ld b, 16
+        ld d, 79
+        ld e, 12
+        pcall(putSprite16XOR)
+    pop bc
+    pop hl
+    pop de
+    ret
 
 drawManifestList:
     ld de, 0x060C
@@ -248,7 +287,7 @@ _:  push de
         config(openConfigRead)
         kld(hl, config_name_variable)
         config(readOption)
-        jr nz, .error
+        kjp(nz, .error)
         kld((.name_scratch), hl)
         kld(hl, config_exec_variable)
         config(readOption)
@@ -276,6 +315,27 @@ _:      config(closeConfig)
         ld (hl), e \ inc hl
         ld (hl), d \ inc hl
         kld(de, (.icon_scratch))
+        ; Load icon file
+        push ix
+        push hl
+            ld b, d \ ld c, e
+            pcall(openFileRead)
+            push af
+                push bc \ pop ix
+                pcall(free)
+            pop af
+            jr nz, .no_icon
+            pcall(getStreamInfo)
+            pcall(malloc)
+            pcall(streamReadToEnd)
+            pcall(closeStream)
+            push ix \ pop de
+            jr .continue
+.no_icon:
+            ld de, 0
+.continue:
+        pop hl
+        pop ix
         ld (hl), e \ inc hl
         ld (hl), d
         kld(hl, manifestCount)
