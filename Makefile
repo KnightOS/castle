@@ -1,6 +1,6 @@
 include .knightos/variables.make
 
-ALL_TARGETS:=$(BIN)castle $(ETC)castle.conf
+ALL_TARGETS:=$(BIN)castle
 
 $(BIN)castle: *.asm
 	mkdir -p $(BIN)
