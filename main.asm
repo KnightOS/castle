@@ -69,7 +69,7 @@ _:  kcall(drawClock)
     cp k2nd
     jr z, homeSelect
     cp kGraph
-    kjp(z, openThreadList)
+    kjp(z, openThreadSwitcher)
     cp kPlus
     kjp(z, incrementContrast)
     cp kMinus
@@ -133,8 +133,8 @@ decrementContrast:
 _:  out (0x10), a
     kjp(homeLoop)
 
-openThreadList:
-    kld(de, threadlist)
+openThreadSwitcher:
+    kld(de, thread_switcher)
     jr _
 launch:
 _:  di
@@ -264,8 +264,8 @@ _:  ld a, 2 \ out (0x10), a
 #include "applist.asm"
 #include "pinned.asm"
 
-threadlist:
-    .db "/bin/threadlist", 0
+thread_switcher:
+    .db "/bin/switcher", 0
 corelibPath:
     .db "/lib/core", 0
 configlibPath:
