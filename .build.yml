@@ -1,0 +1,19 @@
+image: archlinux
+packages:
+  - make
+  - sass
+  - genkfs
+  - kpack-git
+  - kimg
+  - python-pip
+  - knightos-sdk
+sources:
+  - https://github.com/KnightOS/castle
+artifacts:
+  - castle/castle-0.5.4.pkg
+tasks:
+  - ti84p: |
+      cd ${project}
+      knightos init --platform=TI84p
+      make clean
+      make package
